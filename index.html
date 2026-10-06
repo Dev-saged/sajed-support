@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://raw.githubusercontent.com; worker-src 'self' blob:; manifest-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="theme-color" content="#0f2a30">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>تطبيق</title>
+<script>
+/* ===== SECTION: CONFIG ===== */
+const APP_VERSION = '1.0.0';
+const CONFIG = {
+  brand: {
+    name: 'اسم التطبيق',
+    tagline: 'وصف قصير للتطبيق',
+    logo: 'M12 3l9 5v8l-9 5-9-5V8z',
+    fonts: {
+      url: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap',
+      family: "'IBM Plex Sans Arabic',system-ui,sans-serif"
+    },
+    palette: {
+      bg:        ['oklch(0.975 0.008 200)', 'oklch(0.18 0.025 205)'],
+      surface:   ['oklch(1 0 0 / .74)',     'oklch(0.27 0.03 205 / .72)'],
+      ink:       ['oklch(0.22 0.03 205)',   'oklch(0.95 0.01 200)'],
+      mute:      ['oklch(0.46 0.03 205)',   'oklch(0.76 0.02 200)'],
+      line:      ['oklch(0.88 0.012 200)',  'oklch(0.38 0.03 205)'],
+      primary:   ['oklch(0.5 0.1 200)',     'oklch(0.76 0.11 195)'],
+      onPrimary: ['oklch(0.99 0 0)',        'oklch(0.18 0.03 205)'],
+      accent:    ['oklch(0.66 0.14 55)',    'oklch(0.8 0.13 65)'],
+      danger:    ['oklch(0.52 0.19 25)',    'oklch(0.72 0.16 25)'],
+      ok:        ['oklch(0.5 0.12 155)',    'oklch(0.76 0.14 155)']
+    }
+  },
+  modules: ['items'],
+  db: { name: 'app-db' },
+  firebase: null,
+  update: { repo: '', branch: 'main' },
+  license: { expires: '' }
+};
+(() => {
+  const r = document.documentElement.style;
+  for (const [k, v] of Object.entries(CONFIG.brand.palette)) r.setProperty('--' + k, `light-dark(${v[0]},${v[1]})`);
+  r.setProperty('--font', CONFIG.brand.fonts.family);
+  document.title = CONFIG.brand.name;
+  const l = document.createElement('link');
+  l.rel = 'stylesheet'; l.href = CONFIG.brand.fonts.url;
+  document.head.append(l);
+})();
+</script>
+<style>
+/* ===== SECTION: STYLE ===== */
+:root{color-scheme:light dark;--s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px;--r:18px;--ease:cubic-bezier(.22,.8,.24,1)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-block-size:100dvh;background:var(--bg);color:var(--ink);font:400 clamp(.94rem,.9rem + .25vw,1.04rem)/1.7 var(--font);padding-block-end:calc(96px + env(safe-area-inset-bottom));overflow-x:hidden}
+h1{font-size:clamp(1.6rem,1.2rem + 1.8vw,2.3rem);line-height:1.25}
+h2{font-size:clamp(1.15rem,1rem + .6vw,1.4rem);line-height:1.4}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:inherit}
+svg{inline-size:24px;block-size:24px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+[dir=rtl] .flip{transform:scaleX(-1)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.mute{color:var(--mute)}
+.stack{display:grid;gap:var(--s3)}
+.ambient{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.ambient i{position:absolute;inline-size:60vmax;block-size:60vmax;border-radius:50%;filter:blur(72px);opacity:.3;animation:drift 18s var(--ease) infinite alternate}
+.ambient i:nth-child(1){background:var(--primary);inset-block-start:-22vmax;inset-inline-start:-18vmax}
+.ambient i:nth-child(2){background:var(--accent);inset-block-end:-28vmax;inset-inline-end:-22vmax;animation-delay:-9s}
+@keyframes drift{to{transform:translate3d(8vmax,6vmax,0) scale(1.15)}}
+main{padding:var(--s5) var(--s4);max-inline-size:720px;margin-inline:auto;container-type:inline-size;view-transition-name:page}
+.hero{display:grid;gap:var(--s2);justify-items:start;padding-block:var(--s5) var(--s4)}
+.mark{inline-size:60px;block-size:60px;padding:14px;border-radius:20px;background:var(--primary);color:var(--onPrimary);stroke-width:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:var(--s3);margin-block:var(--s4)}
+@container (min-width:560px){.grid{grid-template-columns:repeat(3,1fr)}}
+.card{display:block;background:var(--surface);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:var(--r);padding:var(--s4);text-decoration:none;transition:opacity .5s var(--ease),transform .5s var(--ease),border-color .2s;transition-delay:calc(var(--i,0)*60ms)}
+@starting-style{.card{opacity:0;transform:translateY(14px)}}
+.card:hover,.card:active{transition-delay:0s}
+.tilt{transform:perspective(700px) rotateX(calc(var(--rx,0)*1deg)) rotateY(calc(var(--ry,0)*1deg));transition:transform .25s var(--ease)}
+.kpi b{display:block;font-size:clamp(1.9rem,1.4rem + 2vw,2.5rem);line-height:1.1;color:var(--primary);font-variant-numeric:tabular-nums}
+.row{display:flex;justify-content:space-between;align-items:center;gap:var(--s3);inline-size:100%;text-align:start;cursor:pointer;font:inherit;color:inherit}
+.row:hover{border-color:var(--primary)}
+.row:active{transform:scale(.985)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);min-block-size:48px;padding:0 var(--s5);border:0;border-radius:999px;background:var(--primary);color:var(--onPrimary);font-weight:700;cursor:pointer;text-decoration:none;transition:transform .2s var(--ease),filter .2s}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:scale(.95)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:var(--danger);color:oklch(0.99 0 0)}
+.fab{position:fixed;inset-inline-start:var(--s4);inset-block-end:calc(96px + env(safe-area-inset-bottom));box-shadow:0 10px 30px oklch(0 0 0 / .25);z-index:4}
+.fld{display:grid;gap:var(--s1)}
+.fld label{color:var(--mute);font-size:.88em}
+.in{min-block-size:48px;padding:0 var(--s4);background:var(--bg);border:1px solid var(--line);border-radius:14px;inline-size:100%}
+textarea.in{padding-block:var(--s3);min-block-size:96px;resize:vertical}
+.bar{display:grid;grid-template-columns:1fr auto;gap:var(--s2);margin-block:var(--s3)}
+.err{color:var(--danger);min-block-size:1.5em}
+.empty{text-align:center;display:grid;gap:var(--s3);justify-items:center;padding-block:var(--s6)}
+nav{position:fixed;inset-inline:var(--s4);inset-block-end:calc(var(--s3) + env(safe-area-inset-bottom));display:flex;background:var(--surface);backdrop-filter:blur(20px);border:1px solid var(--line);border-radius:26px;padding:var(--s1);z-index:5;max-inline-size:688px;margin-inline:auto}
+nav a{flex:1;display:grid;justify-items:center;align-content:center;gap:2px;min-block-size:56px;color:var(--mute);text-decoration:none;font-size:.78rem;border-radius:22px;transition:color .2s,background .2s,transform .2s var(--ease)}
+nav a[aria-current=page]{color:var(--primary);background:color-mix(in oklch,var(--primary) 14%,transparent)}
+nav a:active{transform:scale(.92)}
+#sheet{position:fixed;inset:auto 0 0 0;margin:0;inline-size:100%;max-inline-size:none;border:0;border-radius:28px 28px 0 0;background:var(--bg);color:var(--ink);padding:var(--s3) var(--s4) calc(var(--s5) + env(safe-area-inset-bottom));max-block-size:88dvh;overflow:auto;box-shadow:0 -20px 60px oklch(0 0 0 / .3);transition:transform .45s var(--ease),opacity .3s,overlay .45s allow-discrete,display .45s allow-discrete}
+#sheet:not(:popover-open){transform:translateY(100%);opacity:0}
+@starting-style{#sheet:popover-open{transform:translateY(100%);opacity:0}}
+#sheet::backdrop{background:oklch(0 0 0 / .45)}
+.np #sheet{display:none;opacity:1;transform:none}
+.np #sheet.open{display:block}
+.grab{inline-size:44px;block-size:5px;border-radius:9px;background:var(--line);margin:0 auto var(--s4)}
+.sk{position:relative;overflow:hidden;background:var(--line);border-radius:var(--r);block-size:76px}
+.sk::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,oklch(1 0 0 / .35),transparent);animation:sh 1.2s infinite}
+@keyframes sh{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.toast{position:fixed;inset-inline:var(--s4);inset-block-start:calc(var(--s4) + env(safe-area-inset-top));margin-inline:auto;inline-size:fit-content;padding:var(--s3) var(--s5);border-radius:999px;background:var(--ink);color:var(--bg);opacity:0;transform:translateY(-12px);transition:opacity .3s,transform .3s var(--ease);pointer-events:none;z-index:9}
+.toast.on{opacity:1;transform:none}
+.upd{position:sticky;inset-block-start:0;z-index:8;display:flex;justify-content:space-between;align-items:center;gap:var(--s3);padding:var(--s3) var(--s4);background:var(--primary);color:var(--onPrimary)}
+.upd a{font-weight:700;min-block-size:44px;display:inline-grid;place-items:center;padding-inline:var(--s3)}
+.t{display:flex;justify-content:space-between;padding:var(--s2) 0;border-block-end:1px solid var(--line)}
+.t.ok span:last-child{color:var(--ok)}
+.t.bad span:last-child{color:var(--danger)}
+@media (prefers-reduced-motion:reduce){*,::before,::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="ambient" aria-hidden="true"><i></i><i></i></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+<symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></symbol>
+<symbol id="i-up" viewBox="0 0 24 24"><path d="M12 20V9M7 13l5-5 5 5M5 4h14"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+</defs></svg>
+<main id="app"></main>
+<nav id="nav" aria-label="التنقل"></nav>
+<div id="sheet" popover></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script>
+/* ===== SECTION: UTIL ===== */
+const $ = s => document.querySelector(s);
+const reduced = matchMedia('(prefers-reduced-motion:reduce)');
+const clean = s => String(s ?? '').replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, '').trim().slice(0, 1000);
+const h = (t, a = {}, ...k) => {
+  const e = document.createElement(t);
+  for (const [n, v] of Object.entries(a)) {
+    if (n.startsWith('on')) e.addEventListener(n.slice(2), v);
+    else if (v !== false && v != null) e.setAttribute(n, v === true ? '' : v);
+  }
+  e.append(...k.flat().filter(x => x != null && x !== false));
+  return e;
+};
+const NS = 'http://www.w3.org/2000/svg';
+const ico = (n, c = '') => {
+  const s = document.createElementNS(NS, 'svg'), u = document.createElementNS(NS, 'use');
+  s.setAttribute('class', c); s.setAttribute('aria-hidden', 'true');
+  u.setAttribute('href', '#i-' + n); s.append(u);
+  return s;
+};
+const mark = () => {
+  const s = document.createElementNS(NS, 'svg'), p = document.createElementNS(NS, 'path');
+  s.setAttribute('class', 'mark'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true');
+  p.setAttribute('d', CONFIG.brand.logo); s.append(p);
+  return s;
+};
+const card = (...k) => h('div', { class: 'card' }, ...k);
+const haptic = (ms = 12) => { if (!reduced.matches && navigator.vibrate) navigator.vibrate(ms); };
+let _t;
+const toast = m => {
+  const t = $('#toast'); t.textContent = m; t.classList.add('on');
+  clearTimeout(_t); _t = setTimeout(() => t.classList.remove('on'), 2200);
+};
+const newer = (a, b) => {
+  const x = a.split('.').map(Number), y = b.split('.').map(Number);
+  for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0);
+  return false;
+};
+const armBtn = (cls, label, msg, fn) => {
+  let on = 0, t;
+  const b = h('button', {
+    class: 'btn ' + cls, type: 'button',
+    onclick: () => {
+      if (!on) { on = 1; b.textContent = msg; t = setTimeout(() => { on = 0; b.textContent = label; }, 3000); return; }
+      clearTimeout(t); fn();
+    }
+  }, label);
+  return b;
+};
+
+/* ===== SECTION: STORE ===== */
+const signal = v => {
+  const s = new Set();
+  return {
+    get: () => v,
+    set(n) { if (n !== v) { v = n; s.forEach(f => f(v)); } },
+    sub(f) { s.add(f); f(v); return () => s.delete(f); }
+  };
+};
+
+/* ===== SECTION: CRYPTO ===== */
+const vault = {
+  async key(pass, salt) {
+    const m = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 210000, hash: 'SHA-256' }, m, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  },
+  async seal(pass, obj) {
+    const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await this.key(pass, salt), new TextEncoder().encode(JSON.stringify(obj)));
+    return [salt, iv, new Uint8Array(ct)].map(b => btoa(String.fromCharCode(...b))).join('.');
+  },
+  async open(pass, s) {
+    const [salt, iv, ct] = s.split('.').map(p => Uint8Array.from(atob(p), c => c.charCodeAt(0)));
+    return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, await this.key(pass, salt), ct)));
+  }
+};
+
+/* ===== SECTION: SCHEMAS ===== */
+const SCHEMAS = {
+  items: {
+    label: 'السجلات', icon: 'list',
+    fields: [
+      { k: 'title',  t: 'text',     l: 'العنوان', req: 1, col: 1 },
+      { k: 'qty',    t: 'number',   l: 'الكمية',  min: 0, col: 1 },
+      { k: 'status', t: 'select',   l: 'الحالة',  opts: ['جديد', 'قيد العمل', 'منتهي'], filter: 1, col: 1 },
+      { k: 'note',   t: 'textarea', l: 'ملاحظة' }
+    ],
+    kpis: [
+      { l: 'الإجمالي', f: r => r.length },
+      { l: 'منتهي', f: r => r.filter(x => x.status === 'منتهي').length },
+      { l: 'مجموع الكمية', f: r => r.reduce((a, x) => a + (+x.qty || 0), 0) }
+    ]
+  }
+};
+const enabled = () => CONFIG.modules.filter(m => SCHEMAS[m]);
+const validateFields = (fields, o) => {
+  for (const d of fields) {
+    const v = o[d.k];
+    if (d.req && (v === '' || v == null)) return 'الحقل مطلوب: ' + d.l;
+    if (d.t === 'number' && (!Number.isFinite(v) || (d.min != null && v < d.min))) return 'قيمة غير صالحة: ' + d.l;
+  }
+  return '';
+};
+const validate = (m, o) => validateFields(SCHEMAS[m].fields, o);
+const sanitizeRow = (m, r) => {
+  const o = {};
+  if (Number.isInteger(r.id)) o.id = r.id;
+  for (const f of SCHEMAS[m].fields) {
+    const v = r[f.k];
+    o[f.k] = f.t === 'number' ? (Number.isFinite(+v) ? +v : 0) : f.t === 'select' ? (f.opts.includes(v) ? v : f.opts[0]) : clean(v);
+  }
+  return o;
+};
+
+/* ===== SECTION: DB ===== */
+// كل ترحيل جديد يُضاف في النهاية فقط
+const MIGRATIONS = [
+  db => { for (const m of Object.keys(SCHEMAS)) db.createObjectStore(m, { keyPath: 'id', autoIncrement: true }); }
+];
+let _db;
+const openDB = () => new Promise((ok, no) => {
+  const r = indexedDB.open(CONFIG.db.name, MIGRATIONS.length);
+  r.onupgradeneeded = e => { for (let v = e.oldVersion; v < MIGRATIONS.length; v++) MIGRATIONS[v](r.result, r.transaction); };
+  r.onsuccess = () => { _db = r.result; _db.onversionchange = () => _db.close(); ok(); };
+  r.onerror = () => no(r.error);
+});
+const tx = (s, m, f) => new Promise((ok, no) => {
+  const t = _db.transaction(s, m); let q;
+  try { q = f(t.objectStore(s)); } catch (e) { return no(e); }
+  t.oncomplete = () => ok(q && q.result);
+  t.onerror = t.onabort = () => no(t.error);
+});
+const dao = {
+  all: s => tx(s, 'readonly', o => o.getAll()),
+  put: (s, v) => tx(s, 'readwrite', o => o.put(v)),
+  del: (s, id) => tx(s, 'readwrite', o => o.delete(id)),
+  replace: (s, rows) => tx(s, 'readwrite', o => { o.clear(); rows.forEach(r => o.put(r)); })
+};
+const backup = {
+  async out() {
+    const data = {};
+    for (const m of Object.keys(SCHEMAS)) data[m] = await dao.all(m);
+    const b = new Blob([JSON.stringify({ app: CONFIG.db.name, v: APP_VERSION, at: new Date().toISOString(), data })], { type: 'application/json' });
+    const a = h('a', { href: URL.createObjectURL(b), download: `${CONFIG.db.name}-${new Date().toISOString().slice(0, 10)}.json` });
+    a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  },
+  async inn(file) {
+    const j = JSON.parse(await file.text());
+    if (j.app !== CONFIG.db.name || typeof j.data !== 'object' || !j.data) throw new Error('bad');
+    for (const m of Object.keys(SCHEMAS)) {
+      const rows = j.data[m];
+      if (Array.isArray(rows)) await dao.replace(m, rows.filter(r => r && typeof r === 'object').map(r => sanitizeRow(m, r)));
+    }
+  }
+};
+
+/* ===== SECTION: SEARCH-WORKER ===== */
+function filterRows({ rows, q, fk, fv }) {
+  const n = q.toLowerCase();
+  return rows.filter(r => (!fv || r[fk] === fv) && (!n || Object.values(r).some(v => String(v).toLowerCase().includes(n)))).sort((a, b) => b.id - a.id);
+}
+let _w, _n = 0;
+const _p = new Map();
+const search = a => new Promise(ok => {
+  try {
+    if (!_w) {
+      _w = new Worker(URL.createObjectURL(new Blob([`const F=${filterRows};onmessage=e=>postMessage({i:e.data.i,r:F(e.data.a)})`], { type: 'text/javascript' })));
+      _w.onmessage = e => { const p = _p.get(e.data.i); if (p) { _p.delete(e.data.i); p.ok(e.data.r); } };
+      _w.onerror = () => { _p.forEach(p => p.ok(filterRows(p.a))); _p.clear(); _w = null; };
+    }
+    const i = ++_n; _p.set(i, { ok, a }); _w.postMessage({ i, a });
+  } catch { ok(filterRows(a)); }
+});
+
+/* ===== SECTION: SHEET ===== */
+const sheet = $('#sheet');
+if (!sheet.showPopover) document.documentElement.classList.add('np');
+const openSheet = (...k) => {
+  sheet.replaceChildren(h('div', { class: 'grab' }), ...k);
+  sheet.showPopover ? sheet.showPopover() : sheet.classList.add('open');
+};
+const closeSheet = () => sheet.hidePopover ? sheet.hidePopover() : sheet.classList.remove('open');
+
+/* ===== SECTION: VIEWS ===== */
+const route = () => decodeURIComponent(location.hash.slice(1)) || 'home';
+const swap = fn => document.startViewTransition && !reduced.matches ? document.startViewTransition(fn) : fn();
+const skeleton = app => app.replaceChildren(...[0, 1, 2].map(() => h('div', { class: 'sk', style: 'margin-block-end:12px' })));
+const licenseExpired = () => !!CONFIG.license.expires && new Date(CONFIG.license.expires + 'T23:59:59') < new Date();
+const tilt = el => {
+  el.addEventListener('pointermove', e => {
+    if (reduced.matches) return;
+    const b = el.getBoundingClientRect();
+    el.style.setProperty('--ry', ((e.clientX - b.left) / b.width - .5) * 10);
+    el.style.setProperty('--rx', -((e.clientY - b.top) / b.height - .5) * 10);
+  });
+  el.addEventListener('pointerleave', () => { el.style.removeProperty('--rx'); el.style.removeProperty('--ry'); });
+  return el;
+};
+
+function renderNav(r) {
+  const items = [['home', 'home', 'الرئيسية'], ...enabled().slice(0, 3).map(m => [m, SCHEMAS[m].icon, SCHEMAS[m].label]), ['more', 'more', 'المزيد']];
+  $('#nav').replaceChildren(...items.map(([k, i, l]) => h('a', { href: '#' + k, 'aria-current': r === k ? 'page' : null }, ico(i), l)));
+}
+
+async function homeView(app) {
+  skeleton(app);
+  const kp = [];
+  for (const m of enabled()) {
+    const rows = await dao.all(m);
+    SCHEMAS[m].kpis.forEach(k => kp.push({ l: k.l, v: k.f(rows), m }));
+  }
+  app.replaceChildren(
+    h('section', { class: 'hero' }, mark(), h('h1', {}, CONFIG.brand.name), h('p', { class: 'mute' }, CONFIG.brand.tagline)),
+    h('div', { class: 'grid' }, kp.map((k, i) =>
+      h('a', { class: 'card kpi', href: '#' + k.m, style: '--i:' + i }, tilt(h('div', { class: 'tilt' }, h('b', {}, k.v), h('span', { class: 'mute' }, k.l))))))
+  );
+}
+
+async function listView(app, m) {
+  const S = SCHEMAS[m];
+  skeleton(app);
+  const all = await dao.all(m);
+  const fl = S.fields.find(f => f.filter);
+  const q = h('input', { class: 'in', type: 'search', placeholder: 'بحث', autocomplete: 'off', 'aria-label': 'بحث' });
+  const sel = fl && h('select', { class: 'in', 'aria-label': fl.l }, h('option', { value: '' }, 'الكل'), fl.opts.map(o => h('option', { value: o }, o)));
+  const box = h('div', { class: 'stack' });
+  let seq = 0, t;
+  const paint = async () => {
+    const my = ++seq;
+    const rows = await search({ rows: all, q: q.value, fk: fl && fl.k, fv: sel ? sel.value : '' });
+    if (my !== seq) return;
+    box.replaceChildren(...(rows.length ? rows.map((r, i) => rowCard(m, r, i)) : [emptyCard(m)]));
+  };
+  q.addEventListener('input', () => { clearTimeout(t); t = setTimeout(paint, 160); });
+  if (sel) sel.addEventListener('change', paint);
+  app.replaceChildren(
+    h('h2', {}, S.label),
+    h('div', { class: 'bar', style: sel ? '' : 'grid-template-columns:1fr' }, q, sel),
+    box,
+    h('button', { class: 'btn fab', type: 'button', onclick: () => openForm(m) }, ico('plus'), 'إضافة')
+  );
+  paint();
+}
+
+const rowCard = (m, r, i) => {
+  const S = SCHEMAS[m], [first, ...rest] = S.fields;
+  const meta = rest.filter(f => f.col).map(f => `${f.l}: ${r[f.k]}`).join(' · ');
+  return h('button', { class: 'card row', type: 'button', style: '--i:' + Math.min(i, 8), onclick: () => openForm(m, r) },
+    h('div', {}, h('strong', {}, r[first.k]), h('div', { class: 'mute' }, meta)), ico('chev', 'flip'));
+};
+const emptyCard = m => h('div', { class: 'card empty' }, h('p', { class: 'mute' }, 'لا توجد سجلات بعد'),
+  h('button', { class: 'btn', type: 'button', onclick: () => openForm(m) }, ico('plus'), 'إضافة سجل'));
+
+function openForm(m, row) {
+  const S = SCHEMAS[m], f = h('form', { class: 'stack', novalidate: true }), err = h('p', { class: 'err', role: 'alert' });
+  const inputs = S.fields.map(d => {
+    const v = row ? row[d.k] ?? '' : '', id = 'f-' + d.k;
+    const c = d.t === 'select' ? h('select', { class: 'in', id }, d.opts.map(o => h('option', { value: o, selected: o === v }, o)))
+      : d.t === 'textarea' ? h('textarea', { class: 'in', id, maxlength: 1000 }, String(v))
+      : h('input', { class: 'in', id, type: d.t === 'number' ? 'number' : 'text', inputmode: d.t === 'number' ? 'decimal' : null, min: d.min, value: v, maxlength: 200 });
+    f.append(h('div', { class: 'fld' }, h('label', { for: id }, d.l + (d.req ? ' *' : '')), c));
+    return [d, c];
+  });
+  f.append(err);
+  f.addEventListener('submit', async e => {
+    e.preventDefault();
+    const o = row ? { id: row.id } : {};
+    for (const [d, c] of inputs) o[d.k] = d.t === 'number' ? (c.value === '' ? 0 : +c.value) : clean(c.value);
+    const bad = validate(m, o);
+    if (bad) { err.textContent = bad; return; }
+    await dao.put(m, o);
+    haptic(); closeSheet(); toast('تم الحفظ'); render();
+  });
+  f.append(h('button', { class: 'btn', type: 'submit' }, 'حفظ'));
+  if (row) f.append(armBtn('danger', 'حذف', 'اضغط مرة ثانية للتأكيد', async () => { await dao.del(m, row.id); haptic(30); closeSheet(); toast('تم الحذف'); render(); }));
+  openSheet(h('h2', {}, row ? 'تعديل' : 'سجل جديد'), f);
+}
+
+function moreView(app) {
+  const file = h('input', { type: 'file', accept: 'application/json', hidden: true });
+  file.addEventListener('change', async () => {
+    try { await backup.inn(file.files[0]); toast('تم الاستيراد'); render(); } catch { toast('ملف غير صالح'); }
+    file.value = '';
+  });
+  app.replaceChildren(
+    h('h2', {}, 'المزيد'),
+    h('div', { class: 'stack', style: 'margin-block-start:12px' },
+      h('button', { class: 'btn ghost', type: 'button', onclick: () => backup.out().then(() => toast('تم التصدير')) }, ico('down'), 'تصدير نسخة احتياطية'),
+      armBtn('ghost', 'استيراد نسخة احتياطية', 'سيستبدل بياناتك الحالية، اضغط للمتابعة', () => file.click()),
+      file,
+      card(h('div', { class: 'mute' }, 'الإصدار'), h('strong', {}, APP_VERSION)),
+      CONFIG.license.expires ? card(h('div', { class: 'mute' }, 'الاشتراك حتى'), h('strong', {}, CONFIG.license.expires)) : null)
+  );
+}
+
+const lockView = () => h('div', { class: 'card empty' }, mark(), h('h2', {}, 'انتهى الاشتراك'), h('p', { class: 'mute' }, 'تواصل مع مزوّد الخدمة لتجديد الترخيص.'));
+
+async function render() {
+  const r = route(), app = $('#app');
+  renderNav(r);
+  if (r === 'test') return runTests(app);
+  if (licenseExpired()) { app.replaceChildren(lockView()); return; }
+  if (r === 'home') return homeView(app);
+  if (r === 'more') return moreView(app);
+  if (enabled().includes(r)) return listView(app, r);
+  location.replace('#home');
+}
+
+/* ===== SECTION: UPDATE ===== */
+const banner = v => document.body.prepend(h('div', { class: 'upd', role: 'status' },
+  h('span', {}, `إصدار جديد ${v} متاح`),
+  h('a', { href: `https://github.com/${CONFIG.update.repo}/releases/latest`, target: '_blank', rel: 'noopener' }, 'تحديث')));
+async function checkUpdate() {
+  const u = CONFIG.update;
+  if (!u.repo) return;
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/${u.repo}/${u.branch}/version.json`, { cache: 'no-store' });
+    if (!r.ok) return;
+    const j = await r.json();
+    if (/^\d+\.\d+\.\d+$/.test(j.version) && newer(j.version, APP_VERSION)) banner(j.version);
+  } catch {}
+}
+
+/* ===== SECTION: SELFTEST ===== */
+async function runTests(app) {
+  const m = Object.keys(SCHEMAS)[0];
+  const T = [
+    ['signal', () => { const s = signal(1); let x = 0; s.sub(v => { x = v; }); s.set(5); return x === 5 && s.get() === 5; }],
+    ['semver', () => newer('1.2.0', '1.1.9') && !newer('1.0.0', '1.0.0') && !newer('0.9.9', '1.0.0')],
+    ['clean', () => clean(' a\u0000b ') === 'ab'],
+    ['dom-escape', () => h('div', {}, '<img onerror=x>').children.length === 0],
+    ['validate', () => !!validateFields([{ k: 'a', t: 'text', l: 'A', req: 1 }], { a: '' }) && !validateFields([{ k: 'a', t: 'number', l: 'A', min: 0 }], { a: 3 })],
+    ['sanitize', () => sanitizeRow(m, { id: 3, title: ' x ', qty: 'z', status: 'bad' }).qty === 0],
+    ['filter', () => filterRows({ rows: [{ id: 1, a: 'x' }, { id: 2, a: 'y' }], q: 'y', fk: '', fv: '' }).length === 1],
+    ['db', async () => { await dao.put(m, { id: -7, title: 't' }); const ok = (await dao.all(m)).some(r => r.id === -7); await dao.del(m, -7); return ok && !(await dao.all(m)).some(r => r.id === -7); }],
+    ['vault', async () => !crypto.subtle || (await vault.open('p', await vault.seal('p', { a: 1 }))).a === 1]
+  ];
+  const out = [];
+  for (const [n, f] of T) {
+    let ok = false;
+    try { ok = !!(await f()); } catch {}
+    out.push(h('div', { class: 't ' + (ok ? 'ok' : 'bad') }, h('span', {}, n), h('span', {}, ok ? 'OK' : 'FAIL')));
+  }
+  app.replaceChildren(h('h2', {}, 'اختبار ذاتي'), card(...out));
+}
+
+/* ===== SECTION: BOOT ===== */
+let sx = null, py = null;
+addEventListener('touchstart', e => {
+  const t = e.touches[0];
+  sx = innerWidth - t.clientX < 24 ? t.clientX : null;
+  py = scrollY === 0 ? t.clientY : null;
+}, { passive: true });
+addEventListener('touchend', e => {
+  const t = e.changedTouches[0];
+  if (sx != null && sx - t.clientX > 70 && route() !== 'home') history.back();
+  else if (py != null && t.clientY - py > 120) { haptic(); render(); }
+  sx = py = null;
+}, { passive: true });
+addEventListener('deviceorientation', e => {
+  if (reduced.matches || e.gamma == null) return;
+  const s = document.documentElement.style;
+  s.setProperty('--ry', Math.max(-8, Math.min(8, e.gamma / 6)));
+  s.setProperty('--rx', Math.max(-8, Math.min(8, (e.beta - 45) / 8)));
+}, { passive: true });
+$('#nav').addEventListener('click', () => haptic(8));
+
+(async () => {
+  try { await openDB(); } catch { $('#app').replaceChildren(card('تعذّر فتح قاعدة البيانات')); return; }
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  addEventListener('hashchange', () => swap(render));
+  await render();
+  checkUpdate();
+})();
+</script>
+</body>
+</html>
